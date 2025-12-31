@@ -36,8 +36,10 @@ This analysis explores a global dataset of roundabouts, examining their distribu
 **City-level insights:**
 - Auckland, NZ dominates with significantly more roundabouts than any other city
 - 7 of the top 10 cities are in the United States
-- ~275 roundabouts are in unincorporated areas (outside city limits)
+- 259 roundabouts are in unincorporated areas (outside city limits)
 - Carmel, Indiana is famous for its aggressive roundabout adoption program
+- **Total unique cities:** 8,123 cities across all countries
+- **Cities with data exported:** All 8,123 cities saved to CSV
 
 ### 3. Data Quality
 
@@ -96,9 +98,26 @@ This analysis explores a global dataset of roundabouts, examining their distribu
   - Yellow (#ffc44d) - Sweden
   - Orange (#ff9040) - USA
 - **Typography:** Overpass font from Google Fonts (bold labels)
+- **Font sizes:** Extra large for readability
+  - Title: 40pt
+  - Subtitle: 28pt
+  - City labels: 28pt bold
+  - In-bar numbers: Size 16
+- **Title structure:** 
+  - Main title: "You spin me round round baby"
+  - Subtitle: "Top 10 roundabout cities"
 - **In-bar labels:** White count numbers displayed inside each bar
 - **Minimal design:** No grid lines, no x-axis, clean presentation
-- **Title:** "You spin me round round baby - Top 10 roundabout cities"
+- **Dimensions:** 6" x 4" at 300 DPI
+
+## Exported Data Files
+
+### CSV Files
+1. **`all_cities_roundabouts.csv`** - Complete dataset of all cities
+   - 8,123 unique cities
+   - 27,885 total roundabouts
+   - Columns: `city`, `country`, `roundabout_count`
+   - Sorted by roundabout count (descending)
 
 ## Code Snippets
 
@@ -134,6 +153,19 @@ roundabouts_clean |>
   mutate(city = str_extract(address, "^[^,]+"))
 ```
 
+### Exporting all cities data
+```r
+# Create data frame with ALL city counts and countries
+all_cities_df <- roundabouts_clean |>
+  mutate(city = str_extract(address, "^[^,]+")) |>
+  filter(!is.na(city)) |>
+  count(city, country, sort = TRUE) |>
+  rename(roundabout_count = n)
+
+# Save as CSV
+write.csv(all_cities_df, "all_cities_roundabouts.csv", row.names = FALSE)
+```
+
 ### Final polished city plot
 ```r
 # Custom color palette
@@ -149,8 +181,8 @@ country_abbrev <- c(
   "United Kingdom" = "UK"
 )
 
-# Create final plot
-p_final <- roundabouts_clean |>
+# Create final plot with split title
+p_final_split_title <- roundabouts_clean |>
   mutate(city = str_extract(address, "^[^,]+")) |>
   filter(city != "(unincorporated)") |>
   count(city, country, sort = TRUE) |>
@@ -160,21 +192,24 @@ p_final <- roundabouts_clean |>
   ggplot(aes(x = reorder(city_label, n), y = n, fill = country_abbr)) +
   geom_col() +
   geom_text(aes(label = n), hjust = 1.2, color = "white", 
-            size = 5, family = "overpass", fontface = "bold") +
+            size = 16, family = "overpass", fontface = "bold") +
   coord_flip() +
   scale_y_continuous(limits = c(0, 225), expand = c(0, 0)) +
   scale_fill_manual(values = custom_palette) +
-  labs(title = "You spin me round round baby - Top 10 roundabout cities") +
-  theme_minimal(base_family = "overpass") +
+  labs(title = "You spin me round round baby",
+       subtitle = "Top 10 roundabout cities") +
+  theme_minimal(base_family = "overpass", base_size = 32) +
   theme(panel.grid = element_blank(),
         legend.position = "none",
-        plot.title = element_text(family = "overpass"),
+        plot.title = element_text(family = "overpass", size = 40),
+        plot.subtitle = element_text(family = "overpass", size = 28),
         axis.title = element_blank(),
         axis.text.x = element_blank(),
-        axis.text.y = element_text(family = "overpass", face = "bold"))
+        axis.text.y = element_text(family = "overpass", face = "bold", size = 28))
 
 # Save plot
-ggsave("plot_final_top10_cities_custom.png", p_final, width = 10, height = 6, dpi = 300)
+ggsave("plot_final_top10_cities_custom.png", p_final_split_title, 
+       width = 6, height = 4, dpi = 300)
 ```
 
 ### Filtering valid completion years
@@ -212,7 +247,7 @@ All plots saved as high-resolution PNG files (300 DPI):
 4. `plot4_roundabout_types.png` - Bar chart of roundabout types
 5. `plot5_type_over_time.png` - Line plot showing type trends over time
 6. `plot6_top10_cities.png` - Color-coded bar chart of top 10 cities
-7. `plot_final_top10_cities_custom.png` - **Final polished version** with custom design
+7. `plot_final_top10_cities_custom.png` - **Final polished version** with custom design (6" x 4", extra-large fonts, split title)
 
 ## Insights & Interpretation
 
@@ -224,32 +259,36 @@ All plots saved as high-resolution PNG files (300 DPI):
 
 4. **Carmel, Indiana:** Lives up to its reputation as the "Roundabout Capital of the USA" with 146 roundabouts, making it #2 globally among cities.
 
-5. **Data completeness varies:** Completion year data is much more complete for the US and Canada compared to other countries, which may indicate differences in data collection practices.
+5. **Wide distribution:** With 8,123 unique cities having roundabouts, the infrastructure type has achieved widespread global adoption across urban, suburban, and rural contexts.
 
-6. **Standardization:** The overwhelming preference for standard roundabout design (vs. specialized types) suggests convergence on proven design standards.
+6. **Data completeness varies:** Completion year data is much more complete for the US and Canada compared to other countries, which may indicate differences in data collection practices.
 
-7. **Suburban/rural adoption:** The ~275 roundabouts in "(unincorporated)" areas suggest significant adoption outside traditional city boundaries, likely in suburban and rural contexts.
+7. **Standardization:** The overwhelming preference for standard roundabout design (vs. specialized types) suggests convergence on proven design standards.
 
-8. **Recent data caveat:** The sharp decline after 2020 should be interpreted cautiously, as it likely reflects data reporting lag rather than an actual construction slowdown.
+8. **Suburban/rural adoption:** The 259 roundabouts in "(unincorporated)" areas suggest significant adoption outside traditional city boundaries, likely in suburban and rural contexts.
+
+9. **Recent data caveat:** The sharp decline after 2020 should be interpreted cautiously, as it likely reflects data reporting lag rather than an actual construction slowdown.
 
 ## Session Variables
 
 Current R session includes:
 - `roundabouts_clean` - Main dataset (27,887 x 18)
+- `all_cities_df` - All cities data frame (8,123 x 3)
 - `country_abbrev` - Country abbreviation mapping (6 countries)
 - `custom_palette` - Custom color palette (5 colors)
 - `top_10_countries` - Vector of top 10 countries
 - `plot_data` - Prepared data for time series plotting (101 x 3)
 - `p` - Interactive plotly object
 - `p1` through `p6` - Individual ggplot objects
-- `p_final` - Final polished ggplot object
+- `p_final`, `p_final_large`, `p_final_xlarge`, `p_final_split_title` - Evolution of final plot
 
 ## Design Decisions
 
 ### Typography
 - **Font:** Overpass (Google Fonts) - Modern, clean sans-serif
 - **Weight:** Bold for all labels to improve readability
-- **Hierarchy:** Title remains regular weight, labels are bold
+- **Sizes:** Extra large (40pt title, 28pt subtitle and labels, size 16 numbers)
+- **Hierarchy:** Main title at 40pt, subtitle at 28pt, labels at 28pt bold
 
 ### Color Palette
 Custom palette chosen for sophistication and differentiation:
@@ -263,6 +302,20 @@ Custom palette chosen for sophistication and differentiation:
 - **No legend:** Country codes in labels make legend redundant
 - **In-bar labels:** White numbers provide exact values without requiring axis reference
 - **No x-axis:** Clean, minimal design focuses attention on comparisons
+- **Split title:** Main title and subtitle for clear hierarchy
+- **Compact dimensions:** 6" x 4" for easy embedding
+
+## Data Export Summary
+
+### all_cities_roundabouts.csv
+- **Rows:** 8,123 cities
+- **Total roundabouts:** 27,885
+- **Columns:**
+  - `city` - City name (extracted from address)
+  - `country` - Country name
+  - `roundabout_count` - Number of roundabouts in that city
+- **Sorting:** Descending by roundabout count
+- **Top cities included:** Auckland (202), Carmel (146), Gothenburg (117), Calgary (101), etc.
 
 ## Next Steps for Analysis
 
@@ -275,3 +328,4 @@ Custom palette chosen for sophistication and differentiation:
 - Compare roundabout density per capita across countries/cities
 - Analyze temporal patterns: Are certain times of year more common for completions?
 - Create animated time-lapse of roundabout construction over time
+- Analyze cities with highest roundabout density (roundabouts per capita or per square mile)
